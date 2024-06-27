@@ -25,6 +25,9 @@ export const useDraw = (
       if (!ctx ) return;
       ctx.clearRect(0,0,canvas.width,canvas.height)
     }
+
+  
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if(!clicked) return;
