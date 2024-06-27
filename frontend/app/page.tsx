@@ -6,7 +6,7 @@ import {ChromePicker} from 'react-color'
 export default function Home() {
 const[color,setColor]=useState("#000")
 const [showInput, setShowInput] = useState(false);
-const inputRef = useRef(null);
+const inputRef = useRef<HTMLInputElement>(null);
 const [inputValue, setInputValue] = useState("");
 const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
 
@@ -43,7 +43,7 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
       if (inputRef.current) inputRef.current.focus();
     }, 0);
   } 
-  const  textafterCanvas=(e)=>{
+  const  textafterCanvas=(e: React.MouseEvent<HTMLCanvasElement>)=>{
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas?.getContext("2d");
