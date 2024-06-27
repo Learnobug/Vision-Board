@@ -3,6 +3,9 @@ import { useDraw } from "@/hooks/useDraw";
 import Image from "next/image";
 import { useState,useRef } from "react";
 import {ChromePicker} from 'react-color'
+
+
+
 export default function Home() {
 const[color,setColor]=useState("#000")
 const [showInput, setShowInput] = useState(false);
@@ -12,10 +15,9 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
 
   const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;
-
-    const width = 2;
-
+    const width = 5;
     let startPoint = prevPoint || currentPoint;
+    
     if (!ctx) return;
     ctx.beginPath();
     ctx.lineWidth = width;
@@ -43,7 +45,7 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
       if (inputRef.current) inputRef.current.focus();
     }, 0);
   } 
-  const  textafterCanvas=(e: React.MouseEvent<HTMLCanvasElement>)=>{
+  const  textAfterCanvas=(e: React.MouseEvent<HTMLCanvasElement>)=>{
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas?.getContext("2d");
@@ -88,7 +90,7 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
             zIndex: 1,
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") textafterCanvas(e);
+            if (e.key === "Enter") textAfterCanvas(e);
           }}
          
           />
