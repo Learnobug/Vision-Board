@@ -32,10 +32,11 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
   };
   const textOnCanvas = (e) =>{
     const canvas = canvasRef.current;
+    
     if (!canvas) return;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx ) return;
-    setInputPosition({x:e.clientX,y:e.clientY})
+    setInputPosition({ x: e.clientX, y: e.clientY})
 
     setShowInput(true);
     setTimeout(() => {
@@ -44,11 +45,13 @@ const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
   } 
   const  textafterCanvas=(e)=>{
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas?.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
     if (!ctx) return;
     ctx.font = "16px Arial";
     ctx.fillStyle = color;
-    ctx.fillText(inputValue,inputPosition.x, inputPosition.y);
+    ctx.fillText(inputValue,inputPosition.x-rect.left, inputPosition.y-rect.top);
     setInputValue("");
     setShowInput(false);
   }
