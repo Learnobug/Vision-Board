@@ -66,7 +66,7 @@ export default function Home() {
   };
 
   const textOnCanvas = (e: any) => {
-    if(!textButton) return;
+    if (!textButton) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvasRef.current?.getContext("2d");
@@ -109,11 +109,11 @@ export default function Home() {
     <div className="w-screen h-screen bg-white flex justify-between items-center">
       <div className="flex justify-start w-1/4">
         <div className="flex flex-col space-y-4 p-4 bg-gray-200 border-r border-gray-300 relative rounded-lg">
-        <button
-        ref={buttonRef}
-        onClick={() => setShowColorPicker(show => !show)}
-        className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
-      >
+          <button
+            ref={buttonRef}
+            onClick={() => setShowColorPicker((show) => !show)}
+            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -128,24 +128,29 @@ export default function Home() {
                 </g>
               </g>
             </svg>
-            </button>
-      {showColorPicker && (
-        <div className="absolute left-full top-0 ml-2" style={{ zIndex: 1000 }}>
-          <ChromePicker
-            color={color}
-            onChangeComplete={(color) => setColor(color.hex)}
-          />
-        </div>
-      )}
+          </button>
+          {showColorPicker && (
+            <div
+              className="absolute left-full top-0 ml-2"
+              style={{ zIndex: 1000 }}
+            >
+              <ChromePicker
+                color={color}
+                onChangeComplete={(color) => setColor(color.hex)}
+              />
+            </div>
+          )}
           <button
             onClick={() => setTextButton(!textButton)}
-            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+            className={`py-2 px-4 ${textButton ? 'bg-blue-500 text-white' : 'bg-white'} text-gray-700 font-semibold rounded-lg shadow-md`}
           >
             A
           </button>
           <button
             onClick={() => setDrawMode("line")}
-            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+            className={`py-2 px-4 text-gray-700 font-semibold rounded-lg shadow-md ${
+              drawMode === "line" ? "bg-red-500 text-white" : "bg-white"
+            }`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -164,7 +169,9 @@ export default function Home() {
           </button>
           <button
             onClick={() => setDrawMode("rectangle")}
-            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+            className={`py-2 px-4 text-gray-700 font-semibold rounded-lg shadow-md ${
+              drawMode === "rectangle" ? "bg-red-500 text-white" : "bg-white"
+            }`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -183,7 +190,9 @@ export default function Home() {
           </button>
           <button
             onClick={() => setDrawMode("circle")}
-            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+            className={`py-2 px-4 text-gray-700 font-semibold rounded-lg shadow-md ${
+              drawMode === "circle" ? "bg-red-500 text-white" : "bg-white"
+            }`}
           >
             <svg
               width="24"
@@ -218,8 +227,11 @@ export default function Home() {
       </div>
       <div className="w-3/4">
         <canvas
+          //@ts-ignore
           onMouseDown={handleMouseDown}
+          //@ts-ignore
           onMouseUp={handleMouseUp}
+          //@ts-ignore
           onMouseMove={handleMouseMove}
           ref={canvasRef}
           width={750}
@@ -242,6 +254,7 @@ export default function Home() {
               zIndex: 1,
             }}
             onKeyDown={(e) => {
+              //@ts-ignore
               if (e.key === "Enter") textAfterCanvas(e);
             }}
           />
