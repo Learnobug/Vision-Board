@@ -13,6 +13,7 @@ export default function Home() {
   const [drawMode, setDrawMode] = useState("line");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const buttonRef = useRef(null);
+  const [textButton, setTextButton] = useState(false);
 
   const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;
@@ -65,8 +66,8 @@ export default function Home() {
   };
 
   const textOnCanvas = (e: any) => {
+    if(!textButton) return;
     const canvas = canvasRef.current;
-
     if (!canvas) return;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
@@ -93,6 +94,7 @@ export default function Home() {
     );
     setInputValue("");
     setShowInput(false);
+    setTextButton(false);
   };
 
   const {
@@ -135,6 +137,12 @@ export default function Home() {
           />
         </div>
       )}
+          <button
+            onClick={() => setTextButton(!textButton)}
+            className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
+          >
+            A
+          </button>
           <button
             onClick={() => setDrawMode("line")}
             className="py-2 px-4 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-50"
@@ -216,7 +224,7 @@ export default function Home() {
           ref={canvasRef}
           width={750}
           height={550}
-          onDoubleClick={(e) => textOnCanvas(e)}
+          onClick={(e) => textOnCanvas(e)}
           className="border border-black rounded-md"
         ></canvas>
         {showInput && (
