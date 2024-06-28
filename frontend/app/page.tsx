@@ -119,6 +119,7 @@ export default function Home() {
               viewBox="0 0 24 24"
               id="color-palette"
               className="size-6"
+              fill={color}
             >
               <g>
                 <g>
