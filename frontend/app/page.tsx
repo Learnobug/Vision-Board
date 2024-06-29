@@ -33,6 +33,25 @@ export default function Home() {
     ctx.arc(startPoint.x, startPoint.y, 2, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
+    ctx.save();
+  };
+  
+  const EraseLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
+    const { x: currX, y: currY } = currentPoint;
+    const width = 5; 
+    let startPoint = prevPoint || currentPoint;
+    if (!ctx) return;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.lineWidth = width;
+    ctx.moveTo(startPoint.x, startPoint.y);
+    ctx.lineTo(currX, currY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(startPoint.x, startPoint.y, width / 2, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+    ctx.globalCompositeOperation = 'source-over';
   };
 
   const drawRectangle = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -47,6 +66,7 @@ export default function Home() {
     ctx.strokeStyle = color;
     ctx.rect(startX, startY, width, height);
     ctx.stroke();
+    ctx.save();
   };
 
   const drawStraightLine = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -59,6 +79,7 @@ export default function Home() {
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY); 
     ctx.stroke(); 
+    ctx.save();
   };
 
   const drawCircle = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -75,7 +96,9 @@ export default function Home() {
     ctx.strokeStyle = color;
     ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
     ctx.stroke();
+    ctx.save();
   };
+
 
   const textOnCanvas = (e: any) => {
     if (!textButton) return;
@@ -104,6 +127,7 @@ export default function Home() {
       inputPosition.x - rect.left,
       inputPosition.y - rect.top
     );
+    ctx.save();
     setInputValue("");
     setShowInput(false);
     setTextButton(false);
@@ -115,12 +139,14 @@ export default function Home() {
     handleMouseUp,
     handleMouseMove,
     clearCanvas,
-  } = useDraw(drawLine, drawRectangle, drawCircle,drawStraightLine, drawMode);
+    handleRedo
+  } = useDraw(drawLine,EraseLine, drawRectangle, drawCircle,drawStraightLine,drawMode);
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
       <div className="flex justify-start w-1/4">
         <div className="flex flex-col space-y-4 p-4 bg-gray-200 border-r border-gray-300 relative rounded-lg">
+          <button  onClick={() => setDrawMode("eraser")} >Erase</button>
           <button
             ref={buttonRef}
             onClick={() => setShowColorPicker((show) => !show)}
