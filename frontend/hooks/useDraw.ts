@@ -64,8 +64,6 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     setHistory(prevHistory => {
       const newHistory = [...prevHistory];
