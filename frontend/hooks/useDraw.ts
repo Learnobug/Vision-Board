@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState,useCallback } from "react";
 
-export const useDraw = (onDrawLine:any, onDrawRectangle:any, onDrawCircle:any, drawMode:any) => {
+export const useDraw = (onDrawLine:any, onDrawRectangle:any, onDrawCircle:any, onDrawstline:any, drawMode:any) => {
   const [clicked, setClicked] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevPoint = useRef<Point | null>(null);
@@ -26,7 +26,16 @@ export const useDraw = (onDrawLine:any, onDrawRectangle:any, onDrawCircle:any, d
       if (ctx && endPoint) {
         onDrawCircle({ ctx, startPoint: startPoint.current, endPoint });
       }
+      
     }
+    else if(drawMode === "stline" && startPoint.current)
+      {
+        const endPoint = computePointInCanvas(e);
+      const ctx = canvasRef.current?.getContext("2d");
+      if (ctx && endPoint) {
+        onDrawstline({ ctx, startPoint: startPoint.current, endPoint });
+      }
+      }
     prevPoint.current = null;
     startPoint.current = null;
   });

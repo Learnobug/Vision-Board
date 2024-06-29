@@ -10,7 +10,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
-  const [drawMode, setDrawMode] = useState("line");
+  const [drawMode, setDrawMode] = useState("stline");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const buttonRef = useRef(null);
   const [textButton, setTextButton] = useState(false);
@@ -47,6 +47,18 @@ export default function Home() {
     ctx.strokeStyle = color;
     ctx.rect(startX, startY, width, height);
     ctx.stroke();
+  };
+
+  const drawStraightLine = ({ ctx, startPoint, endPoint }: DrawShape) => {
+    if (!ctx || !startPoint || !endPoint) return;
+    const { x: startX, y: startY } = startPoint;
+    const { x: endX, y: endY } = endPoint;
+
+    ctx.beginPath();
+    ctx.lineWidth = 5;
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY); 
+    ctx.stroke(); 
   };
 
   const drawCircle = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -103,7 +115,7 @@ export default function Home() {
     handleMouseUp,
     handleMouseMove,
     clearCanvas,
-  } = useDraw(drawLine, drawRectangle, drawCircle, drawMode);
+  } = useDraw(drawLine, drawRectangle, drawCircle,drawStraightLine, drawMode);
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
