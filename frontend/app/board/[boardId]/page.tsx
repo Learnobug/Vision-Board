@@ -1,10 +1,14 @@
 "use client";
 import { useDraw } from "@/hooks/useDraw";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChromePicker } from "react-color";
+import { useSession } from "next-auth/react";
+import axios from "axios";
 
-export default function Home() {
+
+export default function Home({ params }: { params: { boardId: string } }) {
   const [color, setColor] = useState("#000");
   const [showInput, setShowInput] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -13,7 +17,53 @@ export default function Home() {
   const [drawMode, setDrawMode] = useState("stline");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const buttonRef = useRef(null);
+  const router=useRouter();
   const [textButton, setTextButton] = useState(false);
+  let prevImage: ImageData | null=null;
+  const session = useSession();
+  if (!localStorage.getItem("userId")) {
+    router.push("/api/auth/signin");
+  }
+ useEffect(()=>{
+  setInterval(async()=>{
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if(!compareImageData(prevImage, imageData)){
+   const BoardImage=JSON.stringify(imageData);
+   try{
+    const userId=parseInt(localStorage.getItem("userId"))
+    await axios.put(`/api/board/${params.boardId}`,{BoardState:BoardImage,userId:userId})
+   }
+   catch(e)
+   {
+    console.log(e);
+   }
+    }
+    else{
+      console.log("No change")
+    }
+    prevImage=imageData;
+    
+  },10000)
+
+ })
+ function compareImageData(imgData1:any, imgData2:any) {
+
+  if (!imgData1 || !imgData2) return false;
+  if (imgData1.width !== imgData2.width || imgData1.height !== imgData2.height) return false;
+  for (let i = 0; i < imgData1.data.length; i++) {
+      if (imgData1.data[i] !== imgData2.data[i]) {
+          return false;
+      }
+  }  
+  return true;
+}
+  
+
+
 
   const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;

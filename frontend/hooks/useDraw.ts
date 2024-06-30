@@ -10,6 +10,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
   const [redoStack, setRedoStack] = useState<ImageData[]>([]);
 
 
+
   const handleMouseDown = (e: MouseEvent) => {
     setClicked(true);
     startPoint.current = computePointInCanvas(e);
@@ -71,7 +72,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
       return newHistory;
     });
     setRedoStack([]); 
-    console.log(history)
+
   };
 
   const clearCanvas = () => {

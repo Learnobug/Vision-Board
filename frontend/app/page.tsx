@@ -10,6 +10,7 @@ export default function Home() {
   if (session.status == "unauthenticated") {
     router.push("/api/auth/signin");
   }
+  localStorage.setItem("userId",session.data?.user.id);
    return (<div>
     you are signed in
    </div>)

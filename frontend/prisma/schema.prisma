@@ -17,12 +17,11 @@ model User{
   email String  @unique
   password String
   username String @default("Guest")
-  board  Board[]
 }
 
 model Board{
    id    Int     @id @default(autoincrement())
-  user   User    @relation(fields: [userId],references: [id])
-  userId  Int
-
+  AdminId Int     
+  name String @default("First Board")
+  state Json
 }
