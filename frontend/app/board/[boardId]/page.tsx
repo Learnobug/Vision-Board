@@ -7,7 +7,6 @@ import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 
-
 export default function Home({ params }: { params: { boardId: string } }) {
   const [color, setColor] = useState("#000");
   const [showInput, setShowInput] = useState(false);
@@ -17,53 +16,59 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [drawMode, setDrawMode] = useState("stline");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const buttonRef = useRef(null);
-  const router=useRouter();
+  const router = useRouter();
   const [textButton, setTextButton] = useState(false);
-  let prevImage: ImageData | null=null;
+  const [isUpdated, setIsUpdated] = useState(false);
+  let prevImage: ImageData | null = null;
   const session = useSession();
   if (!localStorage.getItem("userId")) {
     router.push("/api/auth/signin");
   }
- useEffect(()=>{
-  setInterval(async()=>{
+  const updateBoard = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    if(!compareImageData(prevImage, imageData)){
-   const BoardImage=JSON.stringify(imageData);
-   try{
-    const userId=parseInt(localStorage.getItem("userId"))
-    await axios.put(`/api/board/${params.boardId}`,{BoardState:BoardImage,userId:userId})
-   }
-   catch(e)
-   {
-    console.log(e);
-   }
+    const boardImage = canvas.toDataURL();
+    try {
+      //@ts-ignore
+      const userId = parseInt(localStorage.getItem("userId"));
+      await axios.put(`/api/board/${params.boardId}`, {
+        BoardState: boardImage,
+        userId: userId,
+      });
+      console.log("Image updated");
+      setIsUpdated(false);
+    } catch (e) {
+      console.log("here:", e);
     }
-    else{
-      console.log("No change")
+  };
+
+  useEffect(() => {
+    let intervalId;
+    if (isUpdated) {
+      intervalId = setInterval(() => {
+        updateBoard();
+      }, 60000); // 60000 ms = 1 minute
     }
-    prevImage=imageData;
-    
-  },10000)
-
- })
- function compareImageData(imgData1:any, imgData2:any) {
-
-  if (!imgData1 || !imgData2) return false;
-  if (imgData1.width !== imgData2.width || imgData1.height !== imgData2.height) return false;
-  for (let i = 0; i < imgData1.data.length; i++) {
-      if (imgData1.data[i] !== imgData2.data[i]) {
-          return false;
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
       }
-  }  
-  return true;
-}
-  
-
-
+    };
+  }, [isUpdated]); // Dependency array, useEffect runs again if isUpdated changes
+  function compareImageData(imgData1: any, imgData2: any) {
+    if (!imgData1 || !imgData2) return false;
+    if (
+      imgData1.width !== imgData2.width ||
+      imgData1.height !== imgData2.height
+    )
+      return false;
+    for (let i = 0; i < imgData1.data.length; i++) {
+      if (imgData1.data[i] !== imgData2.data[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;
@@ -84,14 +89,15 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.fill();
     ctx.closePath();
     ctx.save();
+    setIsUpdated(true);
   };
-  
+
   const EraseLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;
-    const width = 20; 
+    const width = 20;
     let startPoint = prevPoint || currentPoint;
     if (!ctx) return;
-    ctx.globalCompositeOperation = 'destination-out';
+    ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
     ctx.lineWidth = width;
     ctx.moveTo(startPoint.x, startPoint.y);
@@ -101,7 +107,8 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.arc(startPoint.x, startPoint.y, width / 2, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalCompositeOperation = "source-over";
+    setIsUpdated(true);
   };
 
   const drawRectangle = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -117,6 +124,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.rect(startX, startY, width, height);
     ctx.stroke();
     ctx.save();
+    setIsUpdated(true);
   };
 
   const drawStraightLine = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -127,9 +135,10 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.beginPath();
     ctx.lineWidth = 5;
     ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY); 
-    ctx.stroke(); 
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
     ctx.save();
+    setIsUpdated(true);
   };
 
   const drawCircle = ({ ctx, startPoint, endPoint }: DrawShape) => {
@@ -147,8 +156,8 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.save();
+    setIsUpdated(true);
   };
-
 
   const textOnCanvas = (e: any) => {
     if (!textButton) return;
@@ -181,6 +190,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
     setInputValue("");
     setShowInput(false);
     setTextButton(false);
+    setIsUpdated(true);
   };
 
   const {
@@ -189,14 +199,21 @@ export default function Home({ params }: { params: { boardId: string } }) {
     handleMouseUp,
     handleMouseMove,
     clearCanvas,
-    handleRedo
-  } = useDraw(drawLine,EraseLine, drawRectangle, drawCircle,drawStraightLine,drawMode);
+    handleRedo,
+  } = useDraw(
+    drawLine,
+    EraseLine,
+    drawRectangle,
+    drawCircle,
+    drawStraightLine,
+    drawMode
+  );
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
       <div className="flex justify-start w-1/4">
         <div className="flex flex-col space-y-4 p-4 bg-gray-200 border-r border-gray-300 relative rounded-lg">
-          <button  onClick={() => setDrawMode("eraser")} >Erase</button>
+          <button onClick={() => setDrawMode("eraser")}>Erase</button>
           <button
             ref={buttonRef}
             onClick={() => setShowColorPicker((show) => !show)}
@@ -231,7 +248,9 @@ export default function Home({ params }: { params: { boardId: string } }) {
           )}
           <button
             onClick={() => setTextButton(!textButton)}
-            className={`py-2 px-4 ${textButton ? 'bg-blue-500 text-white' : 'bg-white'} text-gray-700 font-semibold rounded-lg shadow-md`}
+            className={`py-2 px-4 ${
+              textButton ? "bg-blue-500 text-white" : "bg-white"
+            } text-gray-700 font-semibold rounded-lg shadow-md`}
           >
             A
           </button>
