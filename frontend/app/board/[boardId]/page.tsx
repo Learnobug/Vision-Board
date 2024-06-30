@@ -13,7 +13,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [inputPosition, setInputPosition] = useState({ x: 0, y: 0 });
-  const [drawMode, setDrawMode] = useState("stline");
+  const [drawMode, setDrawMode] = useState("line");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const buttonRef = useRef(null);
   const router = useRouter();
@@ -213,7 +213,6 @@ export default function Home({ params }: { params: { boardId: string } }) {
     <div className="w-screen h-screen bg-white flex justify-between items-center">
       <div className="flex justify-start w-1/4">
         <div className="flex flex-col space-y-4 p-4 bg-gray-200 border-r border-gray-300 relative rounded-lg">
-          <button onClick={() => setDrawMode("eraser")}>Erase</button>
           <button
             ref={buttonRef}
             onClick={() => setShowColorPicker((show) => !show)}
@@ -310,6 +309,52 @@ export default function Home({ params }: { params: { boardId: string } }) {
               clip-rule="evenodd"
             >
               <path d="M12 0c6.623 0 12 5.377 12 12s-5.377 12-12 12-12-5.377-12-12 5.377-12 12-12zm0 1c6.071 0 11 4.929 11 11s-4.929 11-11 11-11-4.929-11-11 4.929-11 11-11z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setDrawMode("stline")}
+            className={`py-2 px-4 text-gray-700 font-semibold rounded-lg shadow-md ${
+              drawMode === "stline" ? "bg-red-500 text-white" : "bg-white"
+            }`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={() => setDrawMode("eraser")}
+            className={`py-2 px-4 text-gray-700 font-semibold rounded-lg shadow-md ${
+              drawMode === "eraser" ? "bg-red-500 text-white" : "bg-white"
+            }`}
+          >
+            <svg
+              fill="#000000"
+              viewBox="-5.5 0 32 32"
+              version="1.1"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                {" "}
+                <title>eraser</title>{" "}
+                <path d="M2.125 13.781l7.938-7.938c0.719-0.719 1.813-0.719 2.531 0l7.688 7.688c0.719 0.719 0.719 1.844 0 2.563l-7.938 7.938c-2.813 2.813-7.375 2.813-10.219 0-2.813-2.813-2.813-7.438 0-10.25zM11.063 22.75l-7.656-7.688c-2.125 2.125-2.125 5.563 0 7.688s5.531 2.125 7.656 0z"></path>{" "}
+              </g>
             </svg>
           </button>
           <button
