@@ -19,7 +19,6 @@ export async function POST(req: any){
                     name:true,
                     AdminId:true
                 }
-
             }
         );
         return NextResponse.json(boards);
