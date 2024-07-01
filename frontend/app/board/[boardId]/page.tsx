@@ -2,7 +2,7 @@
 import { useDraw } from "@/hooks/useDraw";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
@@ -19,8 +19,31 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const router = useRouter();
   const [textButton, setTextButton] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
-  let prevImage: ImageData | null = null;
   const session = useSession();
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await axios.get(`/api/board/${params.boardId}`);
+      const state = res.data.boardExist.state;
+      if(state!==""){
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const image = document.createElement("img");
+        image.src = state;
+        image.onload = () => {
+          ctx?.drawImage(image, 0, 0);
+        };
+      }
+      console.log(state);
+    };
+    fetchData();
+  }
+  , []);
+  
+
+
   if (!localStorage.getItem("userId")) {
     router.push("/api/auth/signin");
   }
@@ -35,40 +58,29 @@ export default function Home({ params }: { params: { boardId: string } }) {
         BoardState: boardImage,
         userId: userId,
       });
-      console.log("Image updated");
+      // console.log("Image updated");
       setIsUpdated(false);
     } catch (e) {
       console.log("here:", e);
     }
   };
 
+
+
+
   useEffect(() => {
-    let intervalId;
+    let intervalId:any;
     if (isUpdated) {
       intervalId = setInterval(() => {
         updateBoard();
-      }, 60000); // 60000 ms = 1 minute
+      }, 60000);
     }
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
-  }, [isUpdated]); // Dependency array, useEffect runs again if isUpdated changes
-  function compareImageData(imgData1: any, imgData2: any) {
-    if (!imgData1 || !imgData2) return false;
-    if (
-      imgData1.width !== imgData2.width ||
-      imgData1.height !== imgData2.height
-    )
-      return false;
-    for (let i = 0; i < imgData1.data.length; i++) {
-      if (imgData1.data[i] !== imgData2.data[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
+  }, [isUpdated]);
 
   const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;

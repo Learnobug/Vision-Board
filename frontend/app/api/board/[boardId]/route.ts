@@ -31,7 +31,42 @@ export async function POST(req: any) {
     );
   }
 }
-
+export async function GET(req: any) {
+  try {
+    const BoardId = parseInt(req.url.split("/")[5]);
+    const boardExist = await prisma.board.findFirst({
+      where: {
+        BoardId: BoardId,
+      },
+      select: {
+        state: true,
+      },
+    });
+    if (boardExist) {
+      return NextResponse.json(
+        {
+          msg: "board found",
+          boardExist,
+        },
+        { status: 200 }
+      );
+    } else {
+      return NextResponse.json(
+        {
+          msg: "board not found",
+        },
+        { status: 404 }
+      );
+    }
+  } catch (error) {
+    return NextResponse.json(
+      {
+        msg: `error occur ${error}`,
+      },
+      { status: 400 }
+    );
+  }
+}
 export async function PUT(req: any) {
   try {
     const reqbody = await req.json();
