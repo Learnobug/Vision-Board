@@ -20,7 +20,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [textButton, setTextButton] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export default function Home({ params }: { params: { boardId: string } }) {
           ctx?.drawImage(image, 0, 0);
         };
       }
-      setLoading(false);
-      console.log(state);
+      // setLoading(false);
+      // console.log(state);
     };
     fetchData();
   }
@@ -222,7 +222,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
     drawStraightLine,
     drawMode
   );
-  if(loading) return (<div>Loading...</div>);
+  // if(loading) return (<div>Loading...</div>);
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
