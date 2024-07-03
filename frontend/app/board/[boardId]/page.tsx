@@ -6,7 +6,11 @@ import { useState, useRef, useEffect, use } from "react";
 import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import {io} from "socket.io-client";
 
+
+const socket=io('http://localhost:3001')
+ 
 export default function Home({ params }: { params: { boardId: string } }) {
   const [color, setColor] = useState("#000");
   const [showInput, setShowInput] = useState(false);
@@ -21,7 +25,16 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
   // const [loading, setLoading] = useState(true);
-
+  useEffect(()=>{
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
+      if(!ctx) return;
+      setColor(color)
+      drawLine({prevPoint,currentPoint,ctx})
+    }))
+  },[])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,9 +59,9 @@ export default function Home({ params }: { params: { boardId: string } }) {
   
 
 
-  if (!localStorage.getItem("userId")) {
-    router.push("/api/auth/signin");
-  }
+  // if (!localStorage.getItem('userId')) {
+  //   router.push("/api/auth/signin");
+  // }
   const updateBoard = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -104,7 +117,20 @@ export default function Home({ params }: { params: { boardId: string } }) {
     ctx.closePath();
     ctx.save();
     setIsUpdated(true);
+    socket.emit('draw-line',({prevPoint,currentPoint,color}))
+
   };
+  useEffect(()=>{
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
+         if(!ctx) return;
+         setColor(color)
+         drawLine({prevPoint,currentPoint,ctx});
+    }))
+  
+  },[drawLine])
 
   const EraseLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;

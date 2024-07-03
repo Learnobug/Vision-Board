@@ -83,7 +83,9 @@ export default function Home() {
         <h1 className="text-center mt-2">Blank Board</h1>
       </div>
       <div className="grid grid-cols-5 gap-4 mt-10">
-        {boards.map((board) => (
+
+        {/* {boards && boards.map((board) => (
+          // eslint-disable-next-line react/jsx-key
           <Link href={`/board/${board.BoardId}`}>
             <div
               key={board.BoardId}
@@ -93,7 +95,7 @@ export default function Home() {
               <h1>{board.name}</h1>
             </div>
           </Link>
-        ))}
+        ))} */}
       </div>
     </div>
   );
