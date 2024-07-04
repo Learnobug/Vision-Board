@@ -192,6 +192,20 @@ export default function Home({ params }: { params: { boardId: string } }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+
+    socket.emit("client-ready",params.boardId);
+
+    socket.on("get-canvas-state",()=>{
+      if(!canvas.toDataURL()) return;
+      socket.emit("send-canvas-state",canvas.toDataURL(),params.boardId);
+    })
+    socket.on("receive-canvas-state",(state:string)=>{
+      const image = document.createElement("img");
+      image.src = state;
+      image.onload = () => {
+        ctx?.drawImage(image, 0, 0);
+      };
+    })
     socket.on(
       "draw-line",
       ({ prevPoint, currentPoint, color }: DrawLineProps) => {
@@ -243,6 +257,9 @@ export default function Home({ params }: { params: { boardId: string } }) {
       socket.off("draw-circle");
       socket.off("draw-starightline");
       socket.off("clear");
+      socket.off("get-canvas-state");
+      socket.off("receive-canvas-state");
+      socket.off("client-ready");
     };
   }, [canvasRef]);
 

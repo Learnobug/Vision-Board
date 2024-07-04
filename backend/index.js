@@ -35,6 +35,16 @@ io.on("connection", (socket) => {
     socket.leave(roomId);
   });
 
+  socket.on("client-ready",(roomId)=>{
+    console.log("Client is ready",roomId)
+    socket.broadcast.to(roomId).emit("get-canvas-state")
+  })
+
+  socket.on("send-canvas-state", (canvasState,roomId) => {
+    console.log("Sending canvas state",roomId);
+    socket.broadcast.to(roomId).emit("receive-canvas-state", canvasState);
+  });
+
   socket.on("draw-line", ({ prevPoint, currentPoint, color },roomId) => {
     console.log("Drawing line",roomId);
     socket.broadcast.to(roomId).emit("draw-line", { prevPoint, currentPoint, color });
