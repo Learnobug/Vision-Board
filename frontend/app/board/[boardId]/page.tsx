@@ -59,6 +59,17 @@ export default function Home({ params }: { params: { boardId: string } }) {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const boardId = params.boardId;
+    if(boardId){
+      socket.emit("join-room", boardId);
+    }
+    return () => {
+      socket.emit("leave-room", boardId);
+    };
+  }
+  , [params.boardId]);
+
   // if (!localStorage.getItem('userId')) {
   //   router.push("/api/auth/signin");
   // }
@@ -95,19 +106,19 @@ export default function Home({ params }: { params: { boardId: string } }) {
   }, [isUpdated]);
 
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
-    socket.emit("draw-line", { prevPoint, currentPoint, color });
+    socket.emit("draw-line", { prevPoint, currentPoint, color },params.boardId);
     //@ts-ignore
     drawLine({ ctx, currentPoint, prevPoint });
   };
   const EraseLineFunction = ({ ctx, currentPoint, prevPoint }: Draw) => {
-    socket.emit("erase-line", { prevPoint, currentPoint, color });
+    socket.emit("erase-line", { prevPoint, currentPoint, color },params.boardId);
     //@ts-ignore
     eraseLine({ prevPoint, currentPoint, ctx });
     setIsUpdated(true);
   };
 
   const drawRectanglefunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
-    socket.emit("draw-rectangle", { ctx, startPoint, endPoint, color });
+    socket.emit("draw-rectangle", { ctx, startPoint, endPoint, color },params.boardId);
     drawRectangle({ ctx, startPoint, endPoint, color });
     // setIsUpdated(true);
   };
@@ -117,13 +128,13 @@ export default function Home({ params }: { params: { boardId: string } }) {
     startPoint,
     endPoint,
   }: DrawShape) => {
-    socket.emit("draw-starightline", { ctx, startPoint, endPoint, color });
+    socket.emit("draw-starightline", { ctx, startPoint, endPoint, color },params.boardId);
     drawStraightLine({ ctx, startPoint, endPoint, color });
     setIsUpdated(true);
   };
 
   const drawCircleFunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
-    socket.emit("draw-circle", { ctx, startPoint, endPoint, color });
+    socket.emit("draw-circle", { ctx, startPoint, endPoint, color },params.boardId);
     drawCircle({ ctx, startPoint, endPoint, color });
     setIsUpdated(true);
   };
@@ -384,7 +395,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
             </svg>
           </button>
           <button
-            onClick={() => socket.emit("clear")}
+            onClick={() => socket.emit("clear",params.boardId)}
             className="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600"
           >
             <svg
