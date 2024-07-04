@@ -1,24 +1,32 @@
 "use client";
 import { useDraw } from "@/hooks/useDraw";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useState, useRef, useEffect, use } from "react";
 import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
-import {io} from "socket.io-client";
+import { getSocket } from "../../../socket.js";
+import {
+  drawCircle,
+  drawLine,
+  drawRectangle,
+  drawStraightLine,
+  eraseLine,
+  textAfterCanvasfunc,
+  textOnCanvasfunc,
+} from "@/utils/drawline";
 
-import {getSocket} from '../../../socket.js'
-import { drawCircle, drawLine, drawRectangle, drawStraightLine, eraseLine, textAfterCanvasfunc, textOnCanvasfunc } from "@/utils/drawline";
 
 type DrawLineProps = {
-  prevPoint: Point | null
-  currentPoint: Point
-  color: string
-}
+  prevPoint: Point | null;
+  currentPoint: Point;
+  color: string;
+};
+
+
 
 const socket = getSocket();
- 
+
 export default function Home({ params }: { params: { boardId: string } }) {
   const [color, setColor] = useState("#000");
   const [showInput, setShowInput] = useState(false);
@@ -32,30 +40,12 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [textButton, setTextButton] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
-  
-
-
-  // useEffect(()=>{
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
-  //   const ctx = canvas.getContext("2d");
-  //   socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
-  //     if(!ctx) return;
-  //     setColor(color)
-  //     drawLine({prevPoint,currentPoint,ctx})
-  //     console.log("draw-line", {prevPoint,currentPoint,color})
-  //   }))
-
-  //   return ()=>{
-  //     socket.off('draw-line')
-  //   }
-  // },[])
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await axios.get(`/api/board/${params.boardId}`);
       const state = res.data.boardExist.state;
-      if(state!==""){
+      if (state !== "") {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
@@ -67,10 +57,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
       }
     };
     fetchData();
-  }
-  , []);
-  
-
+  }, []);
 
   // if (!localStorage.getItem('userId')) {
   //   router.push("/api/auth/signin");
@@ -93,65 +80,86 @@ export default function Home({ params }: { params: { boardId: string } }) {
     }
   };
 
+  useEffect(() => {
+    let intervalId: any;
+    if (isUpdated) {
+      intervalId = setInterval(() => {
+        updateBoard();
+      }, 60000);
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isUpdated]);
 
-
-
-  // useEffect(() => {
-  //   let intervalId:any;
-  //   if (isUpdated) {
-  //     intervalId = setInterval(() => {
-  //       updateBoard();
-  //     }, 60000);
-  //   }
-  //   return () => {
-  //     if (intervalId) {
-  //       clearInterval(intervalId);
-  //     }
-  //   };
-  // }, [isUpdated]);
-
- 
-
-  
-  
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
-    socket.emit('draw-line',{prevPoint,currentPoint,color})
+    socket.emit("draw-line", { prevPoint, currentPoint, color });
     //@ts-ignore
     drawLine({ ctx, currentPoint, prevPoint });
-  }
+  };
   const EraseLineFunction = ({ ctx, currentPoint, prevPoint }: Draw) => {
-    socket.emit('erase-line',{prevPoint,currentPoint,color})
+    socket.emit("erase-line", { prevPoint, currentPoint, color });
     //@ts-ignore
-    eraseLine({prevPoint,currentPoint,ctx})
+    eraseLine({ prevPoint, currentPoint, ctx });
     setIsUpdated(true);
   };
 
   const drawRectanglefunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
-    socket.emit('draw-rectangle',{ctx, startPoint, endPoint,color})
-    drawRectangle({ ctx, startPoint, endPoint ,color})
+    socket.emit("draw-rectangle", { ctx, startPoint, endPoint, color });
+    drawRectangle({ ctx, startPoint, endPoint, color });
     // setIsUpdated(true);
   };
 
-  const drawStraightLineFunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
-    socket.emit('draw-starightline',{ctx, startPoint, endPoint,color})
-    drawStraightLine({ ctx, startPoint, endPoint ,color})
+  const drawStraightLineFunction = ({
+    ctx,
+    startPoint,
+    endPoint,
+  }: DrawShape) => {
+    socket.emit("draw-starightline", { ctx, startPoint, endPoint, color });
+    drawStraightLine({ ctx, startPoint, endPoint, color });
     setIsUpdated(true);
   };
 
   const drawCircleFunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
-     socket.emit('draw-circle',{ctx,startPoint,endPoint,color})
-     drawCircle({ctx,startPoint,endPoint,color})
+    socket.emit("draw-circle", { ctx, startPoint, endPoint, color });
+    drawCircle({ ctx, startPoint, endPoint, color });
     setIsUpdated(true);
   };
 
   const textOnCanvas = (e: any) => {
-     textOnCanvasfunc({e,canvasRef,setInputPosition, setShowInput,inputRef})
+    if (!textButton) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    setInputPosition({ x: e.clientX, y: e.clientY });
+
+    setShowInput(true);
+    setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus();
+    }, 0);
   };
 
   const textAfterCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const data={e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated};
-    socket.emit('text',data);
-    textAfterCanvasfunc({e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated});
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas?.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    if (!ctx) return;
+    ctx.font = "16px Arial";
+    ctx.fillStyle = color;
+    ctx.fillText(
+      inputValue,
+      inputPosition.x - rect.left,
+      inputPosition.y - rect.top
+    );
+    ctx.save();
+    setInputValue("");
+    setShowInput(false);
+    setTextButton(false);
+    setIsUpdated(true);
   };
 
   const {
@@ -169,55 +177,60 @@ export default function Home({ params }: { params: { boardId: string } }) {
     drawStraightLineFunction,
     drawMode
   );
-  useEffect(()=>{
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    socket.on('draw-line',(({prevPoint,currentPoint,color}:DrawLineProps)=>{
-         if(!ctx) return;
-         setColor(color)
-         //@ts-ignore
-         drawLine({prevPoint,currentPoint,ctx});
-    }))
-    socket.on('draw-rectangle',(({ startPoint, endPoint,color}:any)=>{
-      if(!ctx) return;
-      setColor(color)
-      console.log("QSQs")
+    socket.on(
+      "draw-line",
+      ({ prevPoint, currentPoint, color }: DrawLineProps) => {
+        if (!ctx) return;
+        setColor(color);
+        //@ts-ignore
+        drawLine({ prevPoint, currentPoint, ctx });
+      }
+    );
+    socket.on("draw-rectangle", ({ startPoint, endPoint, color }: any) => {
+      if (!ctx) return;
+      setColor(color);
+      console.log("QSQs");
       //@ts-ignore
-      drawRectangle({ ctx, startPoint, endPoint ,color})
- }))
-      socket.on('erase-line',(({prevPoint,currentPoint,color}:DrawLineProps)=>{
-        if(!ctx) return;
-        setColor(color)
+      drawRectangle({ ctx, startPoint, endPoint, color });
+    });
+    socket.on(
+      "erase-line",
+      ({ prevPoint, currentPoint, color }: DrawLineProps) => {
+        if (!ctx) return;
+        setColor(color);
         //@ts-ignore
-        eraseLine({prevPoint,currentPoint,ctx});
-      }))
-      socket.on('draw-circle',(({startPoint,endPoint,color }:any)=>{
-        if(!ctx) return;
-        setColor(color)
-        //@ts-ignore
-        drawCircle({ctx,startPoint,endPoint,color });
-      }))
-      socket.on('draw-starightline',(({  startPoint, endPoint ,color}:any)=>{
-        if(!ctx) return;
-        setColor(color)
-        //@ts-ignore
-        drawStraightLine({ ctx, startPoint, endPoint ,color});
-      }))
-      socket.on('text',(data:any)=>{
-       const {e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated}=data;
-       textAfterCanvasfunc({e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated});
+        eraseLine({ prevPoint, currentPoint, ctx });
+      }
+    );
+    socket.on("draw-circle", ({ startPoint, endPoint, color }: any) => {
+      if (!ctx) return;
+      setColor(color);
+      //@ts-ignore
+      drawCircle({ ctx, startPoint, endPoint, color });
+    });
+    socket.on("draw-starightline", ({ startPoint, endPoint, color }: any) => {
+      if (!ctx) return;
+      setColor(color);
+      //@ts-ignore
+      drawStraightLine({ ctx, startPoint, endPoint, color });
+    });
+    // socket.on('text',(data:any)=>{
+    //  const {e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated}=data;
+    //  textAfterCanvasfunc({e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated});
 
-      })
-    return ()=>{
-      socket.off('draw-line')
-      socket.off('draw-rectangle')
-      socket.off('erase-line')
-      socket.off('draw-circle')
-      socket.off('draw-starightline')
-    }
-  },[canvasRef])
-  // if(loading) return (<div>Loading...</div>);
+    // })
+    return () => {
+      socket.off("draw-line");
+      socket.off("draw-rectangle");
+      socket.off("erase-line");
+      socket.off("draw-circle");
+      socket.off("draw-starightline");
+    };
+  }, [canvasRef]);
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
