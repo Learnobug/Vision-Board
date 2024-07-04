@@ -8,8 +8,16 @@ import { useSession } from "next-auth/react";
 import axios from "axios";
 import {io} from "socket.io-client";
 
+import {getSocket} from '../../../socket.js'
+import { drawLine } from "@/utils/drawline";
 
-const socket=io('http://localhost:3001')
+type DrawLineProps = {
+  prevPoint: Point | null
+  currentPoint: Point
+  color: string
+}
+
+const socket = getSocket();
  
 export default function Home({ params }: { params: { boardId: string } }) {
   const [color, setColor] = useState("#000");
@@ -24,17 +32,24 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [textButton, setTextButton] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
-  // const [loading, setLoading] = useState(true);
-  useEffect(()=>{
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
-      if(!ctx) return;
-      setColor(color)
-      drawLine({prevPoint,currentPoint,ctx})
-    }))
-  },[])
+  
+
+
+  // useEffect(()=>{
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
+  //   const ctx = canvas.getContext("2d");
+  //   socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
+  //     if(!ctx) return;
+  //     setColor(color)
+  //     drawLine({prevPoint,currentPoint,ctx})
+  //     console.log("draw-line", {prevPoint,currentPoint,color})
+  //   }))
+
+  //   return ()=>{
+  //     socket.off('draw-line')
+  //   }
+  // },[])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,8 +65,6 @@ export default function Home({ params }: { params: { boardId: string } }) {
           ctx?.drawImage(image, 0, 0);
         };
       }
-      // setLoading(false);
-      // console.log(state);
     };
     fetchData();
   }
@@ -83,54 +96,26 @@ export default function Home({ params }: { params: { boardId: string } }) {
 
 
 
-  useEffect(() => {
-    let intervalId:any;
-    if (isUpdated) {
-      intervalId = setInterval(() => {
-        updateBoard();
-      }, 60000);
-    }
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isUpdated]);
+  // useEffect(() => {
+  //   let intervalId:any;
+  //   if (isUpdated) {
+  //     intervalId = setInterval(() => {
+  //       updateBoard();
+  //     }, 60000);
+  //   }
+  //   return () => {
+  //     if (intervalId) {
+  //       clearInterval(intervalId);
+  //     }
+  //   };
+  // }, [isUpdated]);
 
-  const drawLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
-    const { x: currX, y: currY } = currentPoint;
-    const width = 5;
-    let startPoint = prevPoint || currentPoint;
-
-    if (!ctx) return;
-    ctx.beginPath();
-    ctx.lineWidth = width;
-    ctx.strokeStyle = color;
-    ctx.moveTo(startPoint.x, startPoint.y);
-    ctx.lineTo(currX, currY);
-    ctx.stroke();
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(startPoint.x, startPoint.y, 2, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.closePath();
-    ctx.save();
-    setIsUpdated(true);
-    socket.emit('draw-line',({prevPoint,currentPoint,color}))
-
-  };
-  useEffect(()=>{
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    socket.on('draw-line',(({prevPoint,currentPoint,color})=>{
-         if(!ctx) return;
-         setColor(color)
-         drawLine({prevPoint,currentPoint,ctx});
-    }))
+  const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
+    socket.emit('draw-line',{prevPoint,currentPoint,color})
+    //@ts-ignore
+    drawLine({ ctx, currentPoint, prevPoint });
+  }
   
-  },[drawLine])
 
   const EraseLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     const { x: currX, y: currY } = currentPoint;
@@ -241,13 +226,28 @@ export default function Home({ params }: { params: { boardId: string } }) {
     clearCanvas,
     handleRedo,
   } = useDraw(
-    drawLine,
+    createLine,
     EraseLine,
     drawRectangle,
     drawCircle,
     drawStraightLine,
     drawMode
   );
+  useEffect(()=>{
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    socket.on('draw-line',(({prevPoint,currentPoint,color}:DrawLineProps)=>{
+         if(!ctx) return;
+         setColor(color)
+         //@ts-ignore
+         drawLine({prevPoint,currentPoint,ctx});
+         console.log('called')
+    }))
+    return ()=>{
+      socket.off('draw-line')
+    }
+  },[canvasRef])
   // if(loading) return (<div>Loading...</div>);
 
   return (

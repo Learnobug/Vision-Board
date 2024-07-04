@@ -23,9 +23,8 @@ const io = new Server(httpServer, {
 
 io.on('connection', (socket) => {
     console.log('connection');
-   
-
     socket.on('draw-line', ({ prevPoint, currentPoint, color }) => {
+      console.log('draw-line');
       socket.broadcast.emit('draw-line', { prevPoint, currentPoint, color });
     });
 
