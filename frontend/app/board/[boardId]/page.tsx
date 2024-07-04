@@ -218,6 +218,8 @@ export default function Home({ params }: { params: { boardId: string } }) {
       //@ts-ignore
       drawStraightLine({ ctx, startPoint, endPoint, color });
     });
+
+    socket.on("clear",clearCanvas)
     // socket.on('text',(data:any)=>{
     //  const {e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated}=data;
     //  textAfterCanvasfunc({e,canvasRef,color,inputValue,inputPosition,setInputValue,setShowInput,setTextButton,setIsUpdated});
@@ -229,6 +231,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
       socket.off("erase-line");
       socket.off("draw-circle");
       socket.off("draw-starightline");
+      socket.off("clear");
     };
   }, [canvasRef]);
 
@@ -381,7 +384,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
             </svg>
           </button>
           <button
-            onClick={clearCanvas}
+            onClick={() => socket.emit("clear")}
             className="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600"
           >
             <svg
