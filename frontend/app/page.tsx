@@ -10,6 +10,7 @@ export default function Home() {
   const router = useRouter();
   const session = useSession();
   const [boards, setBoards] = useState<{ BoardId: number; name: string }[]>([]);
+  console.log(session);
 
   if (session.status == "unauthenticated") {
     router.push("/api/auth/signin");
@@ -18,6 +19,7 @@ export default function Home() {
     if (session.data) {
       // @ts-ignore
       localStorage.setItem("userId", session.data?.user.id);
+      localStorage.setItem("email", session.data?.user?.email);
     }
   }, [session.data]);
 

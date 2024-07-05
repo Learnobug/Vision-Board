@@ -15,7 +15,16 @@ import {
   textAfterCanvasfunc,
   textOnCanvasfunc,
 } from "@/utils/drawline";
-
+import {
+  ControlBar,
+  GridLayout,
+  LiveKitRoom,
+  ParticipantTile,
+  RoomAudioRenderer,
+  useTracks,
+} from "@livekit/components-react";
+import "@livekit/components-styles";
+import { Track } from "livekit-client";
 
 type DrawLineProps = {
   prevPoint: Point | null;
@@ -40,6 +49,28 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [textButton, setTextButton] = useState(false);
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
+  const room = params.boardId;
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const name = localStorage.getItem("email");
+        const resp = await fetch(
+          `/api/get-participant-token?room=${room}&username=${name}`
+        );
+        const data = await resp.json();
+        setToken(data.token);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
+
+  if (token === "") {
+    return <div>Getting token...</div>;
+  }
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -265,7 +296,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
-      <div className="flex justify-start w-1/4">
+      <div className="flex justify-start flex-shrink">
         <div className="flex flex-col space-y-4 p-4 bg-gray-200 border-r border-gray-300 relative rounded-lg">
           <button
             ref={buttonRef}
@@ -467,6 +498,43 @@ export default function Home({ params }: { params: { boardId: string } }) {
           />
         )}
       </div>
+      <LiveKitRoom
+      video={true}
+      audio={true}
+      token={token}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      // Use the default LiveKit theme for nice styles.
+      data-lk-theme="default"
+      style={{height: '80vh', width: '40vw'}}
+
+    >
+      {/* Your custom component with basic video conferencing functionality. */}
+      <MyVideoConference />
+      {/* The RoomAudioRenderer takes care of room-wide audio for you. */}
+      <RoomAudioRenderer />
+      {/* Controls for the user to start/stop audio, video, and screen
+      share tracks and to leave the room. */}
+      <ControlBar />
+    </LiveKitRoom>
     </div>
+  );
+}
+
+function MyVideoConference() {
+  // `useTracks` returns all camera and screen share tracks. If a user
+  // joins without a published camera track, a placeholder track is returned.
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+    ],
+    { onlySubscribed: false },
+  );
+  return (
+    <GridLayout tracks={tracks} style={{ height: 'calc(100vh - var(--lk-control-bar-height))' }}>
+      {/* The GridLayout accepts zero or one child. The child is used
+      as a template to render all passed in tracks. */}
+      <ParticipantTile />
+    </GridLayout>
   );
 }
