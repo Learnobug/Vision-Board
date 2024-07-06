@@ -44,7 +44,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
     prevPoint.current = null;
     startPoint.current = null;
   });
-
+//@ts-ignore
   const handleMouseMove = useCallback((e: MouseEvent)=>{
     if (!clicked || (drawMode !== ("line") && drawMode !==("eraser"))) return;
     const currentPoint = computePointInCanvas(e);
