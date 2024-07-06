@@ -6,7 +6,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://vision-board-nine.vercel.app/",
+    origin: "https://vision-board-nine.vercel.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
