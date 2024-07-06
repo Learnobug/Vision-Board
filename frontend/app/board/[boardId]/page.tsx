@@ -50,7 +50,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
   const room = params.boardId;
-  const [token, setToken] = useState<string|null>(null);
+  const [token, setToken] = useState<string|undefined>(undefined);
 
 
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
