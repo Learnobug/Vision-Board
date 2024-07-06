@@ -50,7 +50,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
   const room = params.boardId;
-  const [token, setToken] = useState<string | undefined>(undefined);
+  const [token, setToken] = useState<string|null>(null);
 
 
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
@@ -72,9 +72,10 @@ export default function Home({ params }: { params: { boardId: string } }) {
       try {
         const name = localStorage.getItem("email");
         const resp = await fetch(
-          `/api/get-participant-token-room=${room}&username=${name}`
+          `/api/get-participant-token?room=${room}&username=${name}`
         );
         const data = await resp.json();
+          console.log("token",data)
         setToken(data.token);
       } catch (e) {
         console.error(e);
