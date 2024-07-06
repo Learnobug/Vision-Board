@@ -1,7 +1,7 @@
 "use client";
 import { useDraw } from "@/hooks/useDraw";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect, use, useCallback } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
@@ -52,47 +52,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const room = params.boardId;
   const [token, setToken] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const name = localStorage.getItem("email");
-        const resp = await fetch(
-          `/api/get-participant-token?room=${room}&username=${name}`
-        );
-        const data = await resp.json();
-        setToken(data.token);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-  }, [room]);
 
-  if (token === "") {
-    return <div>Getting token...</div>;
-  }
-
-
- 
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const boardId = params.boardId;
-    if(boardId){
-      socket.emit("join-room", boardId);
-    }
-    return () => {
-      socket.emit("leave-room", boardId);
-    };
-  }
-  , [params.boardId,room]);
-
-  // if (!localStorage.getItem('userId')) {
-  //   router.push("/api/auth/signin");
-  // }
- 
-
- 
-  
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     socket.emit("draw-line", { prevPoint, currentPoint, color },params.boardId);
     //@ts-ignore
@@ -104,6 +64,95 @@ export default function Home({ params }: { params: { boardId: string } }) {
     eraseLine({ prevPoint, currentPoint, ctx });
     setIsUpdated(true);
   };
+
+  
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const name = localStorage.getItem("email");
+        const resp = await fetch(
+          `/api/get-participant-token-room=${room}&username=${name}`
+        );
+        const data = await resp.json();
+        setToken(data.token);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
+
+  if (token === "") {
+    return <div>Getting token...</div>;
+  }
+
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await axios.get(`/api/board/${params.boardId}`);
+      const state = res.data.boardExist.state;
+      if (state !== "") {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const image = document.createElement("img");
+        image.src = state;
+        image.onload = () => {
+          ctx?.drawImage(image, 0, 0);
+        };
+      }
+    };
+    fetchData();
+  }, []);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const boardId = params.boardId;
+    if(boardId){
+      socket.emit("join-room", boardId);
+    }
+    return () => {
+      socket.emit("leave-room", boardId);
+    };
+  }
+  , [params.boardId]);
+
+  // if (!localStorage.getItem('userId')) {
+  //   router.push("/api/auth/signin");
+  // }
+  const updateBoard = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const boardImage = canvas.toDataURL();
+    try {
+      //@ts-ignore
+      const userId = parseInt(localStorage.getItem("userId"));
+      await axios.put(`/api/board/${params.boardId}`, {
+        BoardState: boardImage,
+        userId: userId,
+      });
+      // console.log("Image updated");
+      setIsUpdated(false);
+    } catch (e) {
+      console.log("here:", e);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    let intervalId: any;
+    if (isUpdated) {
+      intervalId = setInterval(() => {
+        updateBoard();
+      }, 60000);
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isUpdated]);
 
   const drawRectanglefunction = ({ ctx, startPoint, endPoint }: DrawShape) => {
     socket.emit("draw-rectangle", { ctx, startPoint, endPoint, color },params.boardId);
@@ -177,24 +226,6 @@ export default function Home({ params }: { params: { boardId: string } }) {
     drawStraightLineFunction,
     drawMode
   );
-   // eslint-disable-next-line react-hooks/rules-of-hooks
-   const updateBoard = useCallback(async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const boardImage = canvas.toDataURL();
-    try {
-      //@ts-ignore
-      const userId = parseInt(localStorage.getItem("userId"));
-      await axios.put(`/api/board/${params.boardId}`, {
-        BoardState: boardImage,
-        userId: userId,
-      });
-      // console.log("Image updated");
-      setIsUpdated(false);
-    } catch (e) {
-      console.log("here:", e);
-    }
-  },[setIsUpdated,canvasRef,params.boardId]);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -269,40 +300,8 @@ export default function Home({ params }: { params: { boardId: string } }) {
       socket.off("receive-canvas-state");
       socket.off("client-ready");
     };
-  }, [canvasRef,clearCanvas,params.boardId]);
- // eslint-disable-next-line react-hooks/rules-of-hooks
- useEffect(() => {
-  const fetchData = async () => {
-    const res = await axios.get(`/api/board/${params.boardId}`);
-    const state = res.data.boardExist.state;
-    if (state !== "") {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      const image = document.createElement("img");
-      image.src = state;
-      image.onload = () => {
-        ctx?.drawImage(image, 0, 0);
-      };
-    }
-  };
-  fetchData();
-}, [canvasRef,params.boardId]);
- // eslint-disable-next-line react-hooks/rules-of-hooks
- useEffect(() => {
-  let intervalId: any;
-  if (isUpdated) {
-    intervalId = setInterval(() => {
-      updateBoard();
-    }, 60000);
-  }
-  return () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-  };
-}, [isUpdated,updateBoard]);
-
+  }, [canvasRef]);
+  
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
@@ -531,7 +530,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
 }
 
 function MyVideoConference() {
-  // `useTracks` returns all camera and screen share tracks. If a user
+  // useTracks returns all camera and screen share tracks. If a user
   // joins without a published camera track, a placeholder track is returned.
   const tracks = useTracks(
     [
