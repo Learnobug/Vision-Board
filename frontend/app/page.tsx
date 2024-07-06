@@ -17,11 +17,13 @@ export default function Home() {
   }
   useEffect(() => {
     if (session.data) {
+      if(session){
       // @ts-ignore
       localStorage.setItem("userId", session.data?.user.id);
-      localStorage.setItem("email", session.data?.user?.email);
+      localStorage.setItem("email", session.data?.user?.email as string);
+      }
     }
-  }, [session.data]);
+  }, [session]);
 
   useEffect(() => {
     const fetchData = async () => {

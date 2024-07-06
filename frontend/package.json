@@ -24,6 +24,7 @@
     "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-color": "^3.0.12",

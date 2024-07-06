@@ -5,7 +5,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
   const [clicked, setClicked] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevPoint = useRef<Point | null>(null);
-  const startPoint = useRef<Point | null>(null);
+  const startPoint = useRef<any>(null);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [redoStack, setRedoStack] = useState<ImageData[]>([]);
 
@@ -42,7 +42,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
    
     prevPoint.current = null;
     startPoint.current = null;
-  });
+  },[]);
 
   const handleMouseMove = useCallback((e: MouseEvent)=>{
     if (!clicked || (drawMode !== ("line") && drawMode !==("eraser"))) return;
@@ -58,7 +58,7 @@ export const useDraw = (onDrawLine:any,onErase:any, onDrawRectangle:any, onDrawC
       onErase({ ctx, currentPoint, prevPoint: prevPoint.current });
      }
     prevPoint.current = currentPoint;
-  });
+  },[]);
 
   const saveCanvasState = () => {
     const canvas = canvasRef.current;

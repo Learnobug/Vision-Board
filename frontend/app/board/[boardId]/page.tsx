@@ -1,7 +1,7 @@
 "use client";
 import { useDraw } from "@/hooks/useDraw";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect, use } from "react";
+import { useState, useRef, useEffect, use, useCallback } from "react";
 import { ChromePicker } from "react-color";
 import { useSession } from "next-auth/react";
 import axios from "axios";
@@ -50,7 +50,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
   const [isUpdated, setIsUpdated] = useState(false);
   const session = useSession();
   const room = params.boardId;
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     (async () => {
@@ -65,31 +65,16 @@ export default function Home({ params }: { params: { boardId: string } }) {
         console.error(e);
       }
     })();
-  }, []);
+  }, [room]);
 
   if (token === "") {
     return <div>Getting token...</div>;
   }
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await axios.get(`/api/board/${params.boardId}`);
-      const state = res.data.boardExist.state;
-      if (state !== "") {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        const image = document.createElement("img");
-        image.src = state;
-        image.onload = () => {
-          ctx?.drawImage(image, 0, 0);
-        };
-      }
-    };
-    fetchData();
-  }, []);
+ 
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const boardId = params.boardId;
     if(boardId){
@@ -99,43 +84,15 @@ export default function Home({ params }: { params: { boardId: string } }) {
       socket.emit("leave-room", boardId);
     };
   }
-  , [params.boardId]);
+  , [params.boardId,room]);
 
   // if (!localStorage.getItem('userId')) {
   //   router.push("/api/auth/signin");
   // }
-  const updateBoard = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const boardImage = canvas.toDataURL();
-    try {
-      //@ts-ignore
-      const userId = parseInt(localStorage.getItem("userId"));
-      await axios.put(`/api/board/${params.boardId}`, {
-        BoardState: boardImage,
-        userId: userId,
-      });
-      // console.log("Image updated");
-      setIsUpdated(false);
-    } catch (e) {
-      console.log("here:", e);
-    }
-  };
+ 
 
-  useEffect(() => {
-    let intervalId: any;
-    if (isUpdated) {
-      intervalId = setInterval(() => {
-        updateBoard();
-      }, 60000);
-    }
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isUpdated]);
-
+ 
+  
   const createLine = ({ ctx, currentPoint, prevPoint }: Draw) => {
     socket.emit("draw-line", { prevPoint, currentPoint, color },params.boardId);
     //@ts-ignore
@@ -211,6 +168,7 @@ export default function Home({ params }: { params: { boardId: string } }) {
     handleMouseMove,
     clearCanvas,
     handleRedo,
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   } = useDraw(
     createLine,
     EraseLineFunction,
@@ -219,6 +177,25 @@ export default function Home({ params }: { params: { boardId: string } }) {
     drawStraightLineFunction,
     drawMode
   );
+   // eslint-disable-next-line react-hooks/rules-of-hooks
+   const updateBoard = useCallback(async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const boardImage = canvas.toDataURL();
+    try {
+      //@ts-ignore
+      const userId = parseInt(localStorage.getItem("userId"));
+      await axios.put(`/api/board/${params.boardId}`, {
+        BoardState: boardImage,
+        userId: userId,
+      });
+      // console.log("Image updated");
+      setIsUpdated(false);
+    } catch (e) {
+      console.log("here:", e);
+    }
+  },[setIsUpdated,canvasRef,params.boardId]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -292,7 +269,40 @@ export default function Home({ params }: { params: { boardId: string } }) {
       socket.off("receive-canvas-state");
       socket.off("client-ready");
     };
-  }, [canvasRef]);
+  }, [canvasRef,clearCanvas,params.boardId]);
+ // eslint-disable-next-line react-hooks/rules-of-hooks
+ useEffect(() => {
+  const fetchData = async () => {
+    const res = await axios.get(`/api/board/${params.boardId}`);
+    const state = res.data.boardExist.state;
+    if (state !== "") {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const image = document.createElement("img");
+      image.src = state;
+      image.onload = () => {
+        ctx?.drawImage(image, 0, 0);
+      };
+    }
+  };
+  fetchData();
+}, [canvasRef,params.boardId]);
+ // eslint-disable-next-line react-hooks/rules-of-hooks
+ useEffect(() => {
+  let intervalId: any;
+  if (isUpdated) {
+    intervalId = setInterval(() => {
+      updateBoard();
+    }, 60000);
+  }
+  return () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
+}, [isUpdated,updateBoard]);
+
 
   return (
     <div className="w-screen h-screen bg-white flex justify-between items-center">
